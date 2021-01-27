@@ -1,0 +1,19 @@
+body{
+ margin: 0;
+ padding: 0;
+ background-color: #fff;
+ font-family: sans-serif;
+ 
+ }
+ 
+ 
+ .box{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  }
+  
+  input.src{
+  padding: 9px 10px 9px 32px;
+  }
