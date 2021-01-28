@@ -53,10 +53,10 @@
 </head>
 <body>
 	<div class="loading-content">
-		<div class="text">Cargando...</div>
-		<div class="text s1">Intenta encontrar los pares de cada imagen. Cada cuadrado blanco es una imagen oculta.</div>
+		<div class="text">Oh no! Un error ah ocurrido</div>
+		<div class="text s1">Hmmmm, veo que te quedaste... Completa mi desafio!</div>
 		<div class="text s2"># de intentos: <span id="intentos">0</span></div>
-		<div class="content-blocks" id="space-imgs"></div>
+		<div class="content-blocks" id="space-images"></div>
 	</div>
 	<script type="text/javascript">
 		var ar_img=[];
@@ -65,7 +65,7 @@
 			ar_img.push(i+1);
 			ar_img.push(i+1);
 		}
-		var dom=document.getElementById("space-imgs");
+		var dom=document.getElementById("space-images");
 		var html='';
 		var counter=1;
 		while(ar_img.length>0){
@@ -74,7 +74,7 @@
 				html+=
 				'<div class="blocks">'+
 					'<div class="content-block" data-partner="'+ar_img[0]+'" data-clicked="0" data-enc="0" id="'+counter+'">'+
-						'<img src="img/'+ar_img[0]+'.jpg"/>'
+						'<img src="img/'+ar_img[0]+'.png"/>'
 					'</div>'+
 				'</div>';
 			}else{
@@ -129,7 +129,7 @@
 									}
 								}
 								if (tam_game==counter_enc) {
-									alert("Ganaste!");
+									alert("Me has derratado...");
 								}
 							}else{
 								for (var i = 0; i < ar.length; i++) {
