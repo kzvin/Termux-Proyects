@@ -1,33 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
-    
-    <style type="text/css">
-        *{
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-        canvas{
-            background-color: #333;
-        }
-        @font-face {
-            font-family: '8bit';
-            font-style: normal;
-            font-weight: 400;
-            src: local('8bit'), url(./resources/font/joystix\ monospace.ttf) format('woff2');
-        }
-    </style>
+<html>
+  <head lang="en">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Snake v8</title>
+    <!-- Link our styles from main.css -->
+    <link rel="stylesheet" type="text/css" href="main.css" />
+  </head>
+  <body>
+    <!-- #gameContainer is the main game board-->
+    <div id="gameContainer"></div>
 
-</head>
-<body>
-    
-    <canvas id="game-area"></canvas>
-    <script type="text/javascript" src="game.js"></script>
+    <!-- #scoreContainer contains the scores  -->
+    <div id="scoreContainer">
+      <div class="scoreBoard">Food: <span id="pointsEarned">0</span></div>
+      <div class="scoreBoard">Blocks: <span id="blocksTravelled">0</span></div>
+    </div>
 
-</body>
+    <!-- #onScreenControllers contains the navigation buttons for mobile screens -->
+    <div id="onScreenControllers">
+      <button id="leftButton">◀️</button>
+      <div>
+        <button id="upButton">🔼</button>
+        <button id="downButton">🔽</button>
+      </div>
+      <button id="rightButton">▶️</button>
+    </div>
+
+    <div class="developerDetails">
+      <div>
+        Developed by
+        <a href="https://rabiroshan.com/" target="_blank">Rabi Roshan.</a>
+      </div>
+      <div>
+        View source code on
+        <a href="https://github.com/RabiRoshan/snake_game" target="_blank"
+          >GitHub.</a
+        >
+      </div>
+    </div>
+  </body>
+
+  <!-- #Load our jscript.js containing the game logic -->
+  <script src="jscript.js"></script>
 </html>
