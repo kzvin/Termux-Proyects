@@ -1,11 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Rembound.com Example</title>
-<script type="text/javascript" src="snake.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    
+    <style type="text/css">
+        *{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        canvas{
+            background-color: #333;
+        }
+        @font-face {
+            font-family: '8bit';
+            font-style: normal;
+            font-weight: 400;
+            src: local('8bit'), url(./resources/font/joystix\ monospace.ttf) format('woff2');
+        }
+    </style>
+
 </head>
 <body>
-<canvas id="viewport" width="640" height="480"></canvas>
+    
+    <canvas id="game-area"></canvas>
+    <script type="text/javascript" src="game.js"></script>
+
 </body>
-</html> 
+</html>
