@@ -1,351 +1,172 @@
-// Declaration of required global variables.
-let width;
-let height;
-let fps;
-let tileSize;
-let canvas;
-let ctx;
-let snake;
-let food;
-let score;
-let isPaused;
-let fpsInterval, startTime, now, then, elapsed;
-let die;
-let eat;
-let FONT_NAME;
-let animationFrame;
-
-
-// Loading the browser window
-window.addEventListener("load",function(){
-
-    document.fonts.load('10pt "8bit"').then(game);
-
-});
-
-// Resizing the canvas on window resize
-window.addEventListener("resize", function () {
-
-    init();
-
-});
-
-// Adding an event listener for key presses.
-window.addEventListener("keydown", function (evt) {
-    if (evt.key === " ") {
-        evt.preventDefault();
-        isPaused = !isPaused;
-        showPaused();
-    }
-    else if (evt.key === "ArrowUp") {
-        evt.preventDefault();
-        if (snake.velY != 1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
-            snake.dir(0, -1);
-    }
-    else if (evt.key === "ArrowDown") {
-        evt.preventDefault();
-        if (snake.velY != -1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
-            snake.dir(0, 1);
-    }
-    else if (evt.key === "ArrowLeft") {
-        evt.preventDefault();
-        if (snake.velX != 1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
-            snake.dir(-1, 0);
-    }
-    else if (evt.key === "ArrowRight") {
-        evt.preventDefault();
-        if (snake.velX != -1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
-            snake.dir(1, 0);
-    }
-
-});
-
-// Checks if food is spawned on the snake's body.
-function foodSnakeOverlap(pos) {
-    if (snake.x == pos.x && snake.y == pos.y)
-        return true;
-    for (var i = 0; i < snake.tail.length; i++) {
-        if (snake.tail[i].x == pos.x && snake.tail[i].y == pos.y)
-            return true;
-    }
-
-    return false;
-
-}
-
-// Determining a random spawn location on the grid.
-function spawnLocation() {
-
-    // Breaking the entire canvas into a grid of tiles.
-    let rows = width / tileSize;
-    let cols = height / tileSize;
-
-    let xPos, yPos;
-    let overlap = false;
-
-    // To prevent an overlap of the food and the snake's body.
-    do {
-
-        xPos = Math.floor(Math.random() * rows) * tileSize;
-        yPos = Math.floor(Math.random() * cols) * tileSize;
-        overlap = foodSnakeOverlap({ x: xPos, y: yPos });
-
-    } while (overlap);
-
-    return { x: xPos, y: yPos };
-
-}
-
-// Showing the score of the player.
-function showScore() {
-
-    ctx.textAlign = "center";
-    ctx.font = `25px "${FONT_NAME}"`;
-    var gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradient.addColorStop("0.0", "white")
-    ctx.fillStyle = gradient;
-    ctx.fillText("SCORE: " + score, width - 120, 30);
-
-}
-
-// Showing if the game is paused.
-function showPaused() {
-
-    ctx.textAlign = "center";
-    ctx.font = `35px "${FONT_NAME}"`;
-    var gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradient.addColorStop("0", "white");
-    gradient.addColorStop("0.5", "green");
-    gradient.addColorStop("1.0", "blue")
-    ctx.fillStyle = gradient;
-    ctx.fillText("PAUSED", width / 2, height / 2);
-
-}
-
-// Treating the snake as an object.
-class Snake {
-
-    // Initialization of object properties.
-    constructor(pos, color) {
-
-        this.x = pos.x;
-        this.y = pos.y;
-        this.tail = [{ x: pos.x - tileSize, y: pos.y }, { x: pos.x - tileSize * 2, y: pos.y }];
-        this.velX = 1;
-        this.velY = 0;
-        this.color = color;
-
-    }
-
-    // Drawing the snake on the canvas.
-    draw() {
-
-        // Drawing the head of the snake.
-        ctx.beginPath();
-        ctx.rect(this.x, this.y, tileSize, tileSize);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.closePath();
-
-        // Drawing the tail of the snake.
-        for (var i = 0; i < this.tail.length; i++) {
-
-            ctx.beginPath();
-            ctx.rect(this.tail[i].x, this.tail[i].y, tileSize, tileSize);
-            ctx.fillStyle = this.color;
-            ctx.fill();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.closePath();
-
-        }
-
-
-    }
-
-    // Moving the snake by updating position.
-    move() {
-
-        // Movement of the tail.    
-        for (var i = this.tail.length - 1; i > 0; i--) {
-
-            this.tail[i] = this.tail[i - 1];
-
-        }
-
-        // Updating the start of the tail to acquire the position of head.
-        if (this.tail.length != 0)
-            this.tail[0] = { x: this.x, y: this.y };
-
-        // Movement of the head.   
-        this.x += this.velX * tileSize;
-        this.y += this.velY * tileSize;
-
-    }
-
-    // Changing the direction of movement of the snake.
-    dir(dirX, dirY) {
-
-        this.velX = dirX;
-        this.velY = dirY;
-
-    }
-
-    // Determining whether the snake has eaten a piece of food.
-    eat() {
-
-        if (Math.abs(this.x - food.x) < tileSize && Math.abs(this.y - food.y) < tileSize) {
-
-            // Adding to the tail.
-            this.tail.push({});
-            return true;
-        }
-
-        return false;
-
-    }
-
-    // Checking if the snake has died.
-    die() {
-
-        for (var i = 0; i < this.tail.length; i++) {
-
-            if (Math.abs(this.x - this.tail[i].x) < tileSize && Math.abs(this.y - this.tail[i].y) < tileSize) {
-                return true;
-            }
-
-        }
-
-        return false;
-
-    }
-
-    border() {
-
-        if (this.x + tileSize > width && this.velX != -1 || this.x < 0 && this.velX != 1)
-            this.x = width - this.x;
-
-        else if (this.y + tileSize > height && this.velY != -1 || this.velY != 1 && this.y < 0)
-            this.y = height - this.y;
-
-    }
-
-}
-
-// Treating the food as an object.
-class Food {
-
-    // Initialization of object properties.
-    constructor(pos, color) {
-
-        this.x = pos.x;
-        this.y = pos.y;
-        this.color = color;
-
-    }
-
-    // Drawing the food on the canvas.
-    draw() {
-
-        ctx.beginPath();
-        ctx.rect(this.x, this.y, tileSize, tileSize);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.closePath();
-
-    }
-
-}
-
-// Initialization of the game objects.
-function init() {
-
-    tileSize = 20;
-
-    // Dynamically controlling the size of canvas.
-    width = tileSize * Math.floor(window.innerWidth / tileSize);
-    height = tileSize * Math.floor(window.innerHeight / tileSize);;
-
-    fps = 10;
-
-    then = Date.now();
-    startTime = then;
-    fpsInterval = 1000 / fps;
-
-    canvas = document.getElementById("game-area");
-    canvas.width = width;
-    canvas.height = height;
-    ctx = canvas.getContext("2d");
-    console.log(canvas);
-
-    FONT_NAME = '8bit';
-    eat = new Audio('./resources/audio/eat.mp3');
-    die = new Audio('./resources/audio/die.mp3');
-    isPaused = false;
-    score = 0;
-    snake = new Snake({ x: tileSize * Math.floor(width / (2 * tileSize)), y: tileSize * Math.floor(height / (2 * tileSize)) }, "#39ff14");
-    food = new Food(spawnLocation(), "red");
-
-}
-
-// Updating the position and redrawing of game objects.
-function update() {
-
-    animationFrame = requestAnimationFrame(update);
-    now = Date.now();
-    elapsed = now - then;
-
-    if (elapsed > fpsInterval) {
-
-        // Get ready for next frame by setting then=now, but also adjust for your
-        // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
-        then = now - (elapsed % fpsInterval);
-
-        // Checking if game is paused.
-        if (isPaused) {
-            return;
-        }
-
-        if (snake.die()) {
-            die.play()
-            alert("GAME OVER!!!");
-            cancelAnimationFrame(animationFrame);
-            window.location.reload();
-        }
-
-        snake.border();
-
-        if (snake.eat()) {
-            eat.play()
-            score += 10;
-            food = new Food(spawnLocation(), "red");
-        }
-
-        // Clearing the canvas for redrawing.
-        ctx.clearRect(0, 0, width, height);
-
-        food.draw();
-        snake.draw();
-        snake.move();
-        showScore();
-
-    }
-
-}
-
-// The actual game function.
-function game() {
-
-    init();
-
-    // The game loop.
-    update();
-
-}
+// GAME_PIXEL_COUNT is the pixels on horizontal or vertical axis of the game board (SQUARE).
+const GAME_PIXEL_COUNT = 40;
+const SQUARE_OF_GAME_PIXEL_COUNT = Math.pow(GAME_PIXEL_COUNT, 2);
+
+let totalFoodAte = 0;
+let totalDistanceTravelled = 0;
+
+/// THE GAME BOARD:
+const gameContainer = document.getElementById("gameContainer");
+
+const createGameBoardPixels = () => {
+  // Populate the [#gameContainer] div with small div's representing game pixels
+  for (let i = 1; i <= SQUARE_OF_GAME_PIXEL_COUNT; ++i) {
+    gameContainer.innerHTML = `${gameContainer.innerHTML} <div class="gameBoardPixel" id="pixel${i}"></div>`;
+  }
+};
+
+// This variable always holds the updated array of game pixels created by createGameBoardPixels() :
+const gameBoardPixels = document.getElementsByClassName("gameBoardPixel");
+
+/// THE FOOD:
+let currentFoodPostion = 0;
+const createFood = () => {
+  // Remove previous food;
+  gameBoardPixels[currentFoodPostion].classList.remove("food");
+
+  // Create new food
+  currentFoodPostion = Math.random();
+  currentFoodPostion = Math.floor(
+    currentFoodPostion * SQUARE_OF_GAME_PIXEL_COUNT
+  );
+  gameBoardPixels[currentFoodPostion].classList.add("food");
+};
+
+/// THE SNAKE:
+
+// Direction codes (Keyboard key codes for arrow keys):
+const LEFT_DIR = 37;
+const UP_DIR = 38;
+const RIGHT_DIR = 39;
+const DOWN_DIR = 40;
+
+// Set snake direction initially to right
+let snakeCurrentDirection = RIGHT_DIR;
+
+const changeDirection = (newDirectionCode) => {
+  // Change the direction of the snake
+  if (newDirectionCode == snakeCurrentDirection) return;
+
+  if (newDirectionCode == LEFT_DIR && snakeCurrentDirection != RIGHT_DIR) {
+    snakeCurrentDirection = newDirectionCode;
+  } else if (newDirectionCode == UP_DIR && snakeCurrentDirection != DOWN_DIR) {
+    snakeCurrentDirection = newDirectionCode;
+  } else if (
+    newDirectionCode == RIGHT_DIR &&
+    snakeCurrentDirection != LEFT_DIR
+  ) {
+    snakeCurrentDirection = newDirectionCode;
+  } else if (newDirectionCode == DOWN_DIR && snakeCurrentDirection != UP_DIR) {
+    snakeCurrentDirection = newDirectionCode;
+  }
+};
+
+// Let the starting position of the snake be at the middle of game board
+let currentSnakeHeadPosition = SQUARE_OF_GAME_PIXEL_COUNT / 2;
+
+// Initial snake length
+let snakeLength = 1000;
+
+// Move snake continously by calling this function repeatedly :
+const moveSnake = () => {
+  switch (snakeCurrentDirection) {
+    case LEFT_DIR:
+      --currentSnakeHeadPosition;
+      const isSnakeHeadAtLastGameBoardPixelTowardsLeft =
+        currentSnakeHeadPosition % GAME_PIXEL_COUNT == GAME_PIXEL_COUNT - 1 ||
+        currentSnakeHeadPosition < 0;
+      if (isSnakeHeadAtLastGameBoardPixelTowardsLeft) {
+        currentSnakeHeadPosition = currentSnakeHeadPosition + GAME_PIXEL_COUNT;
+      }
+      break;
+    case UP_DIR:
+      currentSnakeHeadPosition = currentSnakeHeadPosition - GAME_PIXEL_COUNT;
+      const isSnakeHeadAtLastGameBoardPixelTowardsUp =
+        currentSnakeHeadPosition < 0;
+      if (isSnakeHeadAtLastGameBoardPixelTowardsUp) {
+        currentSnakeHeadPosition =
+          currentSnakeHeadPosition + SQUARE_OF_GAME_PIXEL_COUNT;
+      }
+      break;
+    case RIGHT_DIR:
+      ++currentSnakeHeadPosition;
+      const isSnakeHeadAtLastGameBoardPixelTowardsRight =
+        currentSnakeHeadPosition % GAME_PIXEL_COUNT == 0;
+      if (isSnakeHeadAtLastGameBoardPixelTowardsRight) {
+        currentSnakeHeadPosition = currentSnakeHeadPosition - GAME_PIXEL_COUNT;
+      }
+      break;
+    case DOWN_DIR:
+      currentSnakeHeadPosition = currentSnakeHeadPosition + GAME_PIXEL_COUNT;
+      const isSnakeHeadAtLastGameBoardPixelTowardsDown =
+        currentSnakeHeadPosition > SQUARE_OF_GAME_PIXEL_COUNT - 1;
+      if (isSnakeHeadAtLastGameBoardPixelTowardsDown) {
+        currentSnakeHeadPosition =
+          currentSnakeHeadPosition - SQUARE_OF_GAME_PIXEL_COUNT;
+      }
+      break;
+    default:
+      break;
+  }
+
+  let nextSnakeHeadPixel = gameBoardPixels[currentSnakeHeadPosition];
+
+  // Kill snake if it bites itself:
+  if (nextSnakeHeadPixel.classList.contains("snakeBodyPixel")) {
+    // Stop moving the snake
+    clearInterval(moveSnakeInterval);
+    if (
+      !alert(
+        `You have ate ${totalFoodAte} food by travelling ${totalDistanceTravelled} blocks.`
+      )
+    )
+      window.location.reload();
+  }
+
+  nextSnakeHeadPixel.classList.add("snakeBodyPixel");
+
+  setTimeout(() => {
+    nextSnakeHeadPixel.classList.remove("snakeBodyPixel");
+  }, snakeLength);
+
+  // Update total distance travelled
+  totalDistanceTravelled++;
+  // Update in UI:
+  document.getElementById("blocksTravelled").innerHTML = totalDistanceTravelled;
+
+  if (currentSnakeHeadPosition == currentFoodPostion) {
+    // Update total food ate
+    totalFoodAte++;
+    // Update in UI:
+    document.getElementById("pointsEarned").innerHTML = totalFoodAte;
+
+    // Increase Snake length:
+    snakeLength = snakeLength + 100;
+    createFood();
+  }
+};
+
+/// CALL THE FOLLOWING FUNCTIONS TO RUN THE GAME:
+
+// Create game board pixels:
+createGameBoardPixels();
+
+// Create initial food:
+createFood();
+
+// Move snake:
+var moveSnakeInterval = setInterval(moveSnake, 80);
+
+// Call change direction function on keyboard key-down event:
+addEventListener("keydown", (e) => changeDirection(e.keyCode));
+
+// ON SCREEN CONTROLLERS:
+const leftButton = document.getElementById("leftButton");
+const rightButton = document.getElementById("rightButton");
+const upButton = document.getElementById("upButton");
+const downButton = document.getElementById("downButton");
+
+leftButton.onclick = () => changeDirection(LEFT_DIR);
+rightButton.onclick = () => changeDirection(RIGHT_DIR);
+upButton.onclick = () => changeDirection(UP_DIR);
+downButton.onclick = () => changeDirection(DOWN_DIR);
