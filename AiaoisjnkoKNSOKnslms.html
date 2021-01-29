@@ -1,159 +1,80 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Loading game</title>
-	<style type="text/css">
-		body,html{
-			margin: 0;
-			padding: 0;
-			background: #05394c;
-			font-family: sans-serif;
-		}
-		.loading-content{
-			margin: auto;
-			margin-top: 60px;
-			padding: 10px;
-			width: calc(100% - 20px);
-			max-width: 680px;
-		}
-		.text{
-			width: 100%;
-			color: #fff;
-			text-align: center;
-			font-size: 35px;
-		}
-		.s1{
-			margin-top: 10px;
-			font-size: 15px;
-		}
-		.s2{
-			margin: 10px 0;
-			font-size: 15px;
-		}
-		.content-blocks{
-			display: table;
-			width: 100%;
-		}
-		.blocks{
-			display: inline-table;
-			padding: 5px;
-			width: calc(25% - 14px);
-			background: #fff;
-			border: 2px solid #05394c;
-		}
-		.content-block{
-			width: 100%;
-			transform: rotateY(90deg);
-			transition: 0.5s;
-		}
-		.content-block img{
-			width: 100%;			
-		}
-	</style>
-</head>
-<body>
-	<div class="loading-content">
-		<div class="text">Oh no! Un error ah ocurrido</div>
-		<div class="text s1">Hmmmm, veo que te quedaste... Completa mi desafio!</div>
-		<div class="text s2"># de intentos: <span id="intentos">0</span></div>
-		<div class="content-blocks" id="space-images"></div>
-	</div>
-	<script type="text/javascript">
-		var ar_img=[];
-		var tam_game=8;
-		for (var i = 0; i < tam_game; i++) {
-			ar_img.push(i+1);
-			ar_img.push(i+1);
-		}
-		var dom=document.getElementById("space-images");
-		var html='';
-		var counter=1;
-		while(ar_img.length>0){
-			var newar=[];
-			if (ar_img.length==1) {
-				html+=
-				'<div class="blocks">'+
-					'<div class="content-block" data-partner="'+ar_img[0]+'" data-clicked="0" data-enc="0" id="'+counter+'">'+
-						'<img src="img/'+ar_img[0]+'.png"/>'
-					'</div>'+
-				'</div>';
-			}else{
-				var index=Math.round(Math.random()*ar_img.length)+1;
-				for (var i = 0; i < ar_img.length; i++) {
-					if (i==index) {
-						html+=
-						'<div class="blocks">'+
-							'<div class="content-block" data-partner="'+ar_img[i]+'" data-clicked="0" data-enc="0" id="'+counter+'">'+
-								'<img src="img/'+ar_img[i]+'.jpg">'+
-							'</div>'+
-						'</div>';
-					}else{
-						newar.push(ar_img[i]);
-					}
-				}
-			}
-			ar_img=[];
-			ar_img=newar;
-			counter++;
-		}
-		dom.innerHTML=html;
+document.addEventListener('keydown', function(evento){
+  if(evento.keyCode==32){/*Cuando el usuario presiona un espacio haga esto*/
+    console.log("Salta");/*Que escriba por pantalla salta*/
+    if(trex.saltando==false){
+    saltar();
+    }
+  }
+});
 
-		var ar_inicial=document.getElementsByClassName("blocks");
 
-		var id_ant=0;
-		var counter_clicks=0;
-		var img_ant=0;
-		var intentos=0;
-		var counter_enc=0;
-		var validate_click=true;
-		function myfunction(){
-			if (validate_click) {
-				var element=this.getElementsByClassName("content-block")[0];
-				if(element.id!=id_ant && element.dataset.enc!="1"){
-					element.dataset.clicked="1";
-					element.style.transform="rotateY(0deg)";
-					if (counter_clicks==0) {
-						img_ant=element.dataset.partner;
-						id_ant=element.id;
-						counter_clicks++;
-					}else{
-						validate_click=false;
-						setTimeout(function(){
-							var ar=document.getElementsByClassName("content-block");
-							if (img_ant==element.dataset.partner) {
-								counter_enc++;
-								//IMAGENES IGUALES - EL primero y el segundo
-								for (var i = 0; i < ar.length; i++) {
-									if (ar[i].dataset.clicked=="1") {
-										ar[i].dataset.enc="1"
-									}
-								}
-								if (tam_game==counter_enc) {
-									alert("Me has derratado...");
-								}
-							}else{
-								for (var i = 0; i < ar.length; i++) {
-									if (ar[i].dataset.enc=="0") {
-										ar[i].style.transform="rotateY(90deg)";
-										ar[i].dataset.clicked="0";
-									}
-								}
-							}
-							counter_clicks=0;
-							img_ant=0;
-							intentos++;
-							id_ant=0;
-							validate_click=true;
-							document.getElementById("intentos").innerHTML=intentos;
-						},500);
-					}
-				}
-			}
-		}
+/*Vamos a cargar las imagenes*/
+var imgRex, imgNube, imgCactus, imgSuelo;
+function cargaImagenes(){
+  imgRex= new Image();/*Vamos a decirle que laimagen del rex sea igual a una nueva imagen*/
+  imgNube= new Image();
+  imgCactus= new Image();
+  imgSuelo= new Image();
 
-		for (var i = 0; i < ar_inicial.length; i++) {
-			ar_inicial[i].addEventListener('click',myfunction,false);
-		}
-	</script>
-</body>
-</html>
+  imgRex.src="img/rex.png";/*Indicamos la ruta del objeto*/
+  imgNube.src="img/nube.png";
+  imgCactus.src="img/cactus.png";
+  imgSuelo.src="img/suelo.png";
+}
+var ancho = 700;
+var alto= 300;
+var canvas,ctx;
+/*Vamoa a inicializar*/
+function inicializa(){
+  canvas=document.getElementById('canvas');/*Esta variable canvas vamos a decirle que sea igual al elemento del html llamado canvas*/
+  ctx= canvas.getContext('2d');/*El contextto te dice como funciona la pizarra en 2d*/
+  cargaImagenes();
+}
+
+/*Vamos a borrar la pizarra*/
+function borrarCanvas(){/*Para borrar el canvas lo más sencillo es borrarle pa altura y anchura*/
+  canvas.width= ancho;
+  canvas.height= alto;
+}
+
+var trex = {y: 250, vy:0,gravedad:2, salto:28, vymax:9, saltando: false};/*Pos 1 en donde se encuentra el trex, Pos 2, velocidad vertical cuanto sube los pixeles, 
+una gravedad de 2 y un salto de 20 pixeles y cada vez que pase un fotograma le restamos 2*/
+/*Vamos hacer la función que dibuja la imagen del rex*/
+function dibujaRex(){
+  ctx.drawImage(imgRex,0,0,64,69,100,trex.y,50,50);/*Para dibujar la imagen tenemos que cargar el contexto y tenemos que utilizar el atributo ctx.drawImage();*/
+}
+
+
+/*Vamos hacer la funcion saltar*/
+function saltar(){
+  trex.saltando=true;/*Tenemos que activarlo*/
+  trex.vy=trex.salto;/*La velocidad vertical es igual a 28px*/
+}
+/*Vamos a hacer una funcion del comportamiento de la gravedad*/
+function gravedad(){/*Consiste en el movimiento de saltar */
+  if(trex.saltando==true){/*Comprobar si el dinosaurio está saltando, se refiere que está en el aire, sino está en el aire no hay que 
+    aplicarle la gravedad*/
+    /*Entre más valla restanto el dibujo trex va ir subiendo para arriba*/
+    if(trex.y-trex.vy-trex.gravedad>250){/*Si trex es mayor a 250 haga esto*/
+        trex.saltando=false;/*Así deja de saltar*/
+        trex.vy=0;/*Porque ha llegado al suelo y se ha parado*/
+        trex.y=250;/*Para que queda exactamente en el suelo*/
+    }else{
+      trex.vy-=trex.gravedad;/*Esto es para que autodecrementado en 2 en 2, esto sube para arriba*/
+      trex.y-=trex.vy;/*Le restamos la velocidad*/
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+/*Bucle Principal*/
+var FPS=50;
+setInterval(function(){/*Nos dice cada cuanto tiempo tiene que ejecutarse una funcion concreta*/
+  principal();
+},1000/FPS);
+
+function principal(){/*Aquí vamos a llamar todo este el bucle principal*/
+  borrarCanvas();
+  gravedad(); 
+  dibujaRex();
+}
