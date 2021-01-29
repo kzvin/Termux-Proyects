@@ -1,259 +1,144 @@
-let DIRECCIONES = {
-  ARRIBA: 1,
-  ABAJO: 2,
-  IZQUIERDA: 3,
-  DERECHA: 4,
-};
+document.addEventListener('DOMContentLoaded', () => {
 
-let FPS = 1000 / 15;
+    const squares = document.querySelectorAll('.grid div')
+    const grid = document.querySelector('.grid')
+    const scoreDisplay = document.querySelector('.countScore')
+    const startBtn = document.querySelector('.start')
+    const livesDisplay = document.querySelector('.countLives')
 
-let JUEGO_CANVAS = document.getElementById("juegoCanvas");
-let CTX = JUEGO_CANVAS.getContext("2d");
+    const WIDTH = 30
+    let currentIndex
+    let appleIndex
+    let currentSnake
+    let direction
+    let score, lives, speed, intervalTime, interval, stopGame
 
-let CONTENEDOR_NINTENDO = document.getElementById("contenedorNintendo");
-let PUNTOS_TEXTO = document.getElementById("puntos");
-let BANNER_ROTAR_TELEFONO = document.getElementById("bannerRotarTelefono");
-let TITULO = document.getElementById("titulo");
-let BOTON_CERRAR_BANNER = document.getElementById("botonCerrarBanner");
+    lives = 3
+    score = 0
 
-let SONIDO_GANASTE_PUNTO = new Audio("ganaste_un_punto.wav");
+    const startGame = () => {
+        if (currentSnake)
+            currentSnake.forEach(index => squares[index].classList.remove('snake'))
+        squares.forEach(element => element.classList.remove('apple'))
 
-let CSS_CLASE_SACUDIR_HORIZONTALMENTE = "shake-horizontal";
-let CSS_CLASE_ESCONDER = "esconder";
+        clearInterval(interval)
 
-/** Estado del juego **/
+        direction = 1
+        intervalTime = 250
+        currentSnake = [452, 451, 450]
+        currentIndex = 0
+        speed = 0.97
+        appleIndex = 0
+        stopGame = false
 
-let culebra;
-let direccionActual;
-let nuevaDireccion;
-let comida;
-let ciclo;
-let puntos;
+        randomApple(false)
 
-/** Dibujar **/
+        scoreDisplay.innerText = score
+        livesDisplay.innerText = lives
 
-function rellenarCuadrado(context, posX, posY) {
-  context.beginPath();
-  context.fillStyle = "#2e490b";
-  context.fillRect(posX, posY, 20, 20);
-  context.stroke();
-}
-
-function dibujarCulebra(context, culebra) {
-  for (let i = 0; i < culebra.length; i++) {
-    rellenarCuadrado(context, culebra[i].posX, culebra[i].posY);
-  }
-}
-
-function dibujarComida(context, comida) {
-  rellenarCuadrado(context, comida.posX, comida.posY);
-}
-
-function dibujarParedes(context) {
-  context.beginPath();
-  context.lineWidth = "2";
-  context.rect(20, 20, 560, 560);
-  context.stroke();
-}
-
-function dibujarTexto(context, texto, x, y) {
-  context.font = "38px Arial";
-  context.textAlign = "center";
-  context.fillStyle = "black";
-  context.fillText(texto, x, y);
-}
-
-/** Culebra **/
-
-function moverCulebra(direccion, culebra) {
-  let cabezaPosX = culebra[0].posX;
-  let cabezaPosY = culebra[0].posY;
-
-  if (direccion === DIRECCIONES.DERECHA) {
-    cabezaPosX += 20;
-  } else if (direccion === DIRECCIONES.IZQUIERDA) {
-    cabezaPosX -= 20;
-  } else if (direccion === DIRECCIONES.ABAJO) {
-    cabezaPosY += 20;
-  } else if (direccion === DIRECCIONES.ARRIBA) {
-    cabezaPosY -= 20;
-  }
-
-  // Agregamos la nueva cabeza al principio de la lista
-  culebra.unshift({ posX: cabezaPosX, posY: cabezaPosY });
-  // Borramos la cola de la culebra
-  return culebra.pop(); // { posX, posY }
-}
-
-function culebraComioComida(culebra, comida) {
-  return culebra[0].posX === comida.posX && culebra[0].posY === comida.posY;
-}
-
-/** Comida **/
-
-function generarNuevaPosicionDeComida(culebra) {
-  while (true) {
-    // 0 <= Math.random() < 1
-    let columnaX = Math.max(Math.floor(Math.random() * 29), 1);
-    let columnaY = Math.max(Math.floor(Math.random() * 29), 1);
-
-    let posX = columnaX * 20;
-    let posY = columnaY * 20;
-
-    let colisionConCulebra = false;
-    for (let i = 0; i < culebra.length; i++) {
-      if (culebra[i].posX === posX && culebra[i].posY === posY) {
-        colisionConCulebra = true;
-        break;
-      }
+        currentSnake.forEach(index => squares[index].classList.add('snake'))
+        interval = setInterval(moveOutcomes, intervalTime)
+        grid.style = (stopGame ? "background-color:wheat" : "background-color:rgb(3,22,9)")
     }
 
-    if (colisionConCulebra === true) {
-      continue;
+    const moveOutcomes = () => {
+        if (
+            (currentSnake[0] + WIDTH >= (WIDTH * WIDTH) && direction === WIDTH) ||
+            (currentSnake[0] % WIDTH === 0 && direction === -1) ||
+            (currentSnake[0] % WIDTH === WIDTH - 1 && direction === 1) ||
+            (currentSnake[0] - WIDTH < 0 && direction === -WIDTH) ||
+            squares[currentSnake[0] + direction].classList.contains('snake')
+        ) {
+            stopGame = true
+            livesDisplay.innerText = --lives
+            squares.forEach(element => element.classList.remove('apple'))
+
+            if (lives == 0) {
+                score = 0
+                livesDisplay.innerText = "Game Over"
+                lives = 3
+                return clearInterval(interval)
+            } else {
+                return clearInterval(interval)
+            }
+        }
+
+        const tail = currentSnake.pop()
+        squares[tail].classList.remove('snake')
+        currentSnake.unshift(currentSnake[0] + direction)
+
+
+        //deals with snake getting apple
+        if (squares[currentSnake[0]].classList.contains('apple')) {
+            squares[currentSnake[0]].classList.remove('apple')
+            if (squares[currentSnake[0]].classList.contains('apple2')) {
+                squares[currentSnake[0]].classList.remove('apple2')
+                scoreDisplay.textContent = ++score
+            }
+            squares[tail].classList.add('snake')
+            currentSnake.push(tail)
+            scoreDisplay.textContent = ++score
+            intervalTime = intervalTime * speed
+            randomApple(true)
+            clearInterval(interval)
+
+            interval = setInterval(moveOutcomes, intervalTime)
+        }
+        squares[currentSnake[0]].classList.add('snake')
+
+
     }
 
-    return { posX: posX, posY: posY };
-  }
-}
+    function randomApple(boolean) {
 
-/** Colisiones **/
+        if ((score % 3 === 0) && boolean)
+            for (let index = 0; index < 2; index++) {
+                do
+                    appleIndex = Math.floor(Math.random() * squares.length)
+                while (squares[appleIndex].classList.contains('snake'))
+                if (index == 0)
+                    squares[appleIndex].classList.add('apple')
+                else
+                    squares[appleIndex].classList.add('apple2')
 
-function ocurrioColision(culebra) {
-  let cabeza = culebra[0];
+                setTimeout(() => {
+                    squares[appleIndex].classList.remove('apple2')
+                }, 2000);
 
-  if (
-    cabeza.posX < 20 ||
-    cabeza.posY < 20 ||
-    cabeza.posX >= 580 ||
-    cabeza.posY >= 580
-  ) {
-    return true;
-  }
+            }
+        else {
+            do
+                appleIndex = Math.floor(Math.random() * squares.length)
+            while (squares[appleIndex].classList.contains('snake'))
+            squares[appleIndex].classList.add('apple')
+        }
 
-  if (culebra.length === 1) {
-    return false;
-  }
-
-  for (let i = 1; i < culebra.length; i++) {
-    if (cabeza.posX === culebra[i].posX && cabeza.posY === culebra[i].posY) {
-      return true;
     }
-  }
 
-  return false;
-}
+    function control(e) {
+        squares[currentIndex].classList.remove('snake')
 
-/** Puntaje **/
+        if (e.keyCode === 39 && direction != -1)
+            direction = 1
+        else if (e.keyCode === 38 && direction != WIDTH)
+            direction = -WIDTH
+        else if (e.keyCode === 37 && direction != 1)
+            direction = -1
+        else if (e.keyCode === 40 && direction != -WIDTH)
+            direction = WIDTH
 
-function mostrarPuntos(puntos) {
-  PUNTOS_TEXTO.innerText = "PUNTOS: " + puntos;
-}
+    }
+    document.addEventListener('keydown', control)
+    startBtn.addEventListener('click', startGame)
 
-function incrementarPuntaje() {
-  puntos++;
-  mostrarPuntos(puntos);
-  SONIDO_GANASTE_PUNTO.play();
-}
+    grid.addEventListener('click', () => {
+        if (!stopGame)
+            clearInterval(interval)
+        else
+            interval = setInterval(moveOutcomes, intervalTime)
+        grid.style = (stopGame ? "background-color:rgb(3,22,9)" : "background-color:wheat")
 
-/** Responsive **/
+        stopGame = !stopGame
+    })
 
-window.addEventListener("orientationchange", function () {
-  TITULO.classList.add(CSS_CLASE_ESCONDER);
-  BANNER_ROTAR_TELEFONO.classList.remove(CSS_CLASE_ESCONDER);
-});
-
-BOTON_CERRAR_BANNER.addEventListener("click", function () {
-  TITULO.classList.remove(CSS_CLASE_ESCONDER);
-  BANNER_ROTAR_TELEFONO.classList.add(CSS_CLASE_ESCONDER);
-});
-
-/** Ciclo de Juego **/
-
-document.addEventListener("keydown", function (e) {
-  if (e.code === "ArrowUp" && direccionActual !== DIRECCIONES.ABAJO) {
-    nuevaDireccion = DIRECCIONES.ARRIBA;
-  } else if (e.code === "ArrowDown" && direccionActual !== DIRECCIONES.ARRIBA) {
-    nuevaDireccion = DIRECCIONES.ABAJO;
-  } else if (
-    e.code === "ArrowLeft" &&
-    direccionActual !== DIRECCIONES.DERECHA
-  ) {
-    nuevaDireccion = DIRECCIONES.IZQUIERDA;
-  } else if (
-    e.code === "ArrowRight" &&
-    direccionActual !== DIRECCIONES.IZQUIERDA
-  ) {
-    nuevaDireccion = DIRECCIONES.DERECHA;
-  }
-});
-
-function cicloDeJuego() {
-  let colaDescartada = moverCulebra(nuevaDireccion, culebra);
-  direccionActual = nuevaDireccion;
-
-  if (culebraComioComida(culebra, comida)) {
-    culebra.push(colaDescartada);
-    comida = generarNuevaPosicionDeComida(culebra);
-    incrementarPuntaje();
-  }
-
-  if (ocurrioColision(culebra)) {
-    gameOver();
-    return;
-  }
-
-  CTX.clearRect(0, 0, 600, 600);
-  dibujarParedes(CTX);
-  dibujarCulebra(CTX, culebra);
-  dibujarComida(CTX, comida);
-}
-
-function gameOver() {
-  clearInterval(ciclo);
-  ciclo = undefined;
-  dibujarTexto(CTX, "¡Fin del Juego!", 300, 260);
-  dibujarTexto(CTX, "Click para volver a jugar", 300, 310);
-  CONTENEDOR_NINTENDO.classList.add(CSS_CLASE_SACUDIR_HORIZONTALMENTE);
-}
-
-function empezarJuego() {
-  culebra = [
-    { posX: 60, posY: 20 },
-    { posX: 40, posY: 20 },
-    { posX: 20, posY: 20 },
-  ];
-
-  direccionActual = DIRECCIONES.DERECHA;
-  nuevaDireccion = DIRECCIONES.DERECHA;
-
-  comida = generarNuevaPosicionDeComida(culebra);
-  puntos = 0;
-
-  mostrarPuntos(puntos);
-
-  CONTENEDOR_NINTENDO.classList.remove(CSS_CLASE_SACUDIR_HORIZONTALMENTE);
-
-  ciclo = setInterval(cicloDeJuego, FPS);
-}
-
-dibujarParedes(CTX);
-dibujarTexto(CTX, "¡Click para empezar!", 300, 260);
-dibujarTexto(CTX, "Desktop: Muévete con ↑ ↓ → ←", 300, 310);
-dibujarTexto(CTX, "Móbil: Tap para girar la culebra", 300, 360);
-
-JUEGO_CANVAS.addEventListener("click", function () {
-  if (ciclo === undefined) {
-    empezarJuego();
-    return;
-  }
-
-  if (direccionActual === DIRECCIONES.ABAJO) {
-    nuevaDireccion = DIRECCIONES.IZQUIERDA;
-  } else if (direccionActual === DIRECCIONES.IZQUIERDA) {
-    nuevaDireccion = DIRECCIONES.ARRIBA;
-  } else if (direccionActual === DIRECCIONES.ARRIBA) {
-    nuevaDireccion = DIRECCIONES.DERECHA;
-  } else if (direccionActual === DIRECCIONES.DERECHA) {
-    nuevaDireccion = DIRECCIONES.ABAJO;
-  }
-});
+})
