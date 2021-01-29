@@ -1,607 +1,351 @@
-// ------------------------------------------------------------
-// Creating A Snake Game Tutorial With HTML5
-// Copyright (c) 2015 Rembound.com
-// 
-// This program is free software: you can redistribute it and/or modify  
-// it under the terms of the GNU General Public License as published by  
-// the Free Software Foundation, either version 3 of the License, or  
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,  
-// but WITHOUT ANY WARRANTY; without even the implied warranty of  
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the  
-// GNU General Public License for more details.  
-// 
-// You should have received a copy of the GNU General Public License  
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-//
-// http://rembound.com/articles/creating-a-snake-game-tutorial-with-html5
-// ------------------------------------------------------------
+// Declaration of required global variables.
+let width;
+let height;
+let fps;
+let tileSize;
+let canvas;
+let ctx;
+let snake;
+let food;
+let score;
+let isPaused;
+let fpsInterval, startTime, now, then, elapsed;
+let die;
+let eat;
+let FONT_NAME;
+let animationFrame;
 
-// The function gets called when the window is fully loaded
-window.onload = function() {
-    // Get the canvas and context
-    var canvas = document.getElementById("viewport"); 
-    var context = canvas.getContext("2d");
-    
-    // Timing and frames per second
-    var lastframe = 0;
-    var fpstime = 0;
-    var framecount = 0;
-    var fps = 0;
-    
-    var initialized = false;
-    
-    // Images
-    var images = [];
-    var tileimage;
-    
-    // Image loading global variables
-    var loadcount = 0;
-    var loadtotal = 0;
-    var preloaded = false;
-    
-    // Load images
-    function loadImages(imagefiles) {
-        // Initialize variables
-        loadcount = 0;
-        loadtotal = imagefiles.length;
-        preloaded = false;
-        
-        // Load the images
-        var loadedimages = [];
-        for (var i=0; i<imagefiles.length; i++) {
-            // Create the image object
-            var image = new Image();
-            
-            // Add onload event handler
-            image.onload = function () {
-                loadcount++;
-                if (loadcount == loadtotal) {
-                    // Done loading
-                    preloaded = true;
-                }
-            };
-            
-            // Set the source url of the image
-            image.src = imagefiles[i];
-            
-            // Save to the image array
-            loadedimages[i] = image;
-        }
-        
-        // Return an array of images
-        return loadedimages;
+
+// Loading the browser window
+window.addEventListener("load",function(){
+
+    document.fonts.load('10pt "8bit"').then(game);
+
+});
+
+// Resizing the canvas on window resize
+window.addEventListener("resize", function () {
+
+    init();
+
+});
+
+// Adding an event listener for key presses.
+window.addEventListener("keydown", function (evt) {
+    if (evt.key === " ") {
+        evt.preventDefault();
+        isPaused = !isPaused;
+        showPaused();
     }
-    
-    // Level properties
-    var Level = function (columns, rows, tilewidth, tileheight) {
-        this.columns = columns;
-        this.rows = rows;
-        this.tilewidth = tilewidth;
-        this.tileheight = tileheight;
-        
-        // Initialize tiles array
-        this.tiles = [];
-        for (var i=0; i<this.columns; i++) {
-            this.tiles[i] = [];
-            for (var j=0; j<this.rows; j++) {
-                this.tiles[i][j] = 0;
-            }
-        }
-    };
-    
-    // Generate a default level with walls
-    Level.prototype.generate = function() {
-        for (var i=0; i<this.columns; i++) {
-            for (var j=0; j<this.rows; j++) {
-                if (i == 0 || i == this.columns-1 ||
-                    j == 0 || j == this.rows-1) {
-                    // Add walls at the edges of the level
-                    this.tiles[i][j] = 1;
-                } else {
-                    // Add empty space
-                    this.tiles[i][j] = 0;
-                }
-            }
-        }
-    };
-    
-    
-    // Snake
-    var Snake = function() {
-        this.init(0, 0, 1, 10, 1);
+    else if (evt.key === "ArrowUp") {
+        evt.preventDefault();
+        if (snake.velY != 1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
+            snake.dir(0, -1);
     }
-    
-    // Direction table: Up, Right, Down, Left
-    Snake.prototype.directions = [[0, -1], [1, 0], [0, 1], [-1, 0]];
-    
-    // Initialize the snake at a location
-    Snake.prototype.init = function(x, y, direction, speed, numsegments) {
-        this.x = x;
-        this.y = y;
-        this.direction = direction; // Up, Right, Down, Left
-        this.speed = speed;         // Movement speed in blocks per second
-        this.movedelay = 0;
-        
-        // Reset the segments and add new ones
-        this.segments = [];
-        this.growsegments = 0;
-        for (var i=0; i<numsegments; i++) {
-            this.segments.push({x:this.x - i*this.directions[direction][0],
-                                y:this.y - i*this.directions[direction][1]});
-        }
+    else if (evt.key === "ArrowDown") {
+        evt.preventDefault();
+        if (snake.velY != -1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
+            snake.dir(0, 1);
     }
-    
-    // Increase the segment count
-    Snake.prototype.grow = function() {
-        this.growsegments++;
-    };
-    
-    // Check we are allowed to move
-    Snake.prototype.tryMove = function(dt) {
-        this.movedelay += dt;
-        var maxmovedelay = 1 / this.speed;
-        if (this.movedelay > maxmovedelay) {
+    else if (evt.key === "ArrowLeft") {
+        evt.preventDefault();
+        if (snake.velX != 1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
+            snake.dir(-1, 0);
+    }
+    else if (evt.key === "ArrowRight") {
+        evt.preventDefault();
+        if (snake.velX != -1 && snake.x >= 0 && snake.x <= width && snake.y >= 0 && snake.y <= height)
+            snake.dir(1, 0);
+    }
+
+});
+
+// Checks if food is spawned on the snake's body.
+function foodSnakeOverlap(pos) {
+    if (snake.x == pos.x && snake.y == pos.y)
+        return true;
+    for (var i = 0; i < snake.tail.length; i++) {
+        if (snake.tail[i].x == pos.x && snake.tail[i].y == pos.y)
+            return true;
+    }
+
+    return false;
+
+}
+
+// Determining a random spawn location on the grid.
+function spawnLocation() {
+
+    // Breaking the entire canvas into a grid of tiles.
+    let rows = width / tileSize;
+    let cols = height / tileSize;
+
+    let xPos, yPos;
+    let overlap = false;
+
+    // To prevent an overlap of the food and the snake's body.
+    do {
+
+        xPos = Math.floor(Math.random() * rows) * tileSize;
+        yPos = Math.floor(Math.random() * cols) * tileSize;
+        overlap = foodSnakeOverlap({ x: xPos, y: yPos });
+
+    } while (overlap);
+
+    return { x: xPos, y: yPos };
+
+}
+
+// Showing the score of the player.
+function showScore() {
+
+    ctx.textAlign = "center";
+    ctx.font = `25px "${FONT_NAME}"`;
+    var gradient = ctx.createLinearGradient(0, 0, width, 0);
+    gradient.addColorStop("0.0", "white")
+    ctx.fillStyle = gradient;
+    ctx.fillText("SCORE: " + score, width - 120, 30);
+
+}
+
+// Showing if the game is paused.
+function showPaused() {
+
+    ctx.textAlign = "center";
+    ctx.font = `35px "${FONT_NAME}"`;
+    var gradient = ctx.createLinearGradient(0, 0, width, 0);
+    gradient.addColorStop("0", "white");
+    gradient.addColorStop("0.5", "green");
+    gradient.addColorStop("1.0", "blue")
+    ctx.fillStyle = gradient;
+    ctx.fillText("PAUSED", width / 2, height / 2);
+
+}
+
+// Treating the snake as an object.
+class Snake {
+
+    // Initialization of object properties.
+    constructor(pos, color) {
+
+        this.x = pos.x;
+        this.y = pos.y;
+        this.tail = [{ x: pos.x - tileSize, y: pos.y }, { x: pos.x - tileSize * 2, y: pos.y }];
+        this.velX = 1;
+        this.velY = 0;
+        this.color = color;
+
+    }
+
+    // Drawing the snake on the canvas.
+    draw() {
+
+        // Drawing the head of the snake.
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, tileSize, tileSize);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.closePath();
+
+        // Drawing the tail of the snake.
+        for (var i = 0; i < this.tail.length; i++) {
+
+            ctx.beginPath();
+            ctx.rect(this.tail[i].x, this.tail[i].y, tileSize, tileSize);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.closePath();
+
+        }
+
+
+    }
+
+    // Moving the snake by updating position.
+    move() {
+
+        // Movement of the tail.    
+        for (var i = this.tail.length - 1; i > 0; i--) {
+
+            this.tail[i] = this.tail[i - 1];
+
+        }
+
+        // Updating the start of the tail to acquire the position of head.
+        if (this.tail.length != 0)
+            this.tail[0] = { x: this.x, y: this.y };
+
+        // Movement of the head.   
+        this.x += this.velX * tileSize;
+        this.y += this.velY * tileSize;
+
+    }
+
+    // Changing the direction of movement of the snake.
+    dir(dirX, dirY) {
+
+        this.velX = dirX;
+        this.velY = dirY;
+
+    }
+
+    // Determining whether the snake has eaten a piece of food.
+    eat() {
+
+        if (Math.abs(this.x - food.x) < tileSize && Math.abs(this.y - food.y) < tileSize) {
+
+            // Adding to the tail.
+            this.tail.push({});
             return true;
         }
+
         return false;
-    };
-    
-    // Get the position of the next move
-    Snake.prototype.nextMove = function() {
-        var nextx = this.x + this.directions[this.direction][0];
-        var nexty = this.y + this.directions[this.direction][1];
-        return {x:nextx, y:nexty};
-    }
-    
-    // Move the snake in the direction
-    Snake.prototype.move = function() {
-        // Get the next move and modify the position
-        var nextmove = this.nextMove();
-        this.x = nextmove.x;
-        this.y = nextmove.y;
-    
-        // Get the position of the last segment
-        var lastseg = this.segments[this.segments.length-1];
-        var growx = lastseg.x;
-        var growy = lastseg.y;
-    
-        // Move segments to the position of the previous segment
-        for (var i=this.segments.length-1; i>=1; i--) {
-            this.segments[i].x = this.segments[i-1].x;
-            this.segments[i].y = this.segments[i-1].y;
-        }
-        
-        // Grow a segment if needed
-        if (this.growsegments > 0) {
-            this.segments.push({x:growx, y:growy});
-            this.growsegments--;
-        }
-        
-        // Move the first segment
-        this.segments[0].x = this.x;
-        this.segments[0].y = this.y;
-        
-        // Reset movedelay
-        this.movedelay = 0;
+
     }
 
-    // Create objects
-    var snake = new Snake();
-    var level = new Level(20, 15, 32, 32);
-    
-    // Variables
-    var score = 0;              // Score
-    var gameover = true;        // Game is over
-    var gameovertime = 1;       // How long we have been game over
-    var gameoverdelay = 0.5;    // Waiting time after game over
-    
-    // Initialize the game
-    function init() {
-        // Load images
-        images = loadImages(["snake-graphics.png"]);
-        tileimage = images[0];
-    
-        // Add mouse events
-        canvas.addEventListener("mousedown", onMouseDown);
-        
-        // Add keyboard events
-        document.addEventListener("keydown", onKeyDown);
-        
-        // New game
-        newGame();
-        gameover = true;
-    
-        // Enter main loop
-        main(0);
-    }
-    
-    // Check if we can start a new game
-    function tryNewGame() {
-        if (gameovertime > gameoverdelay) {
-            newGame();
-            gameover = false;
-        }
-    }
-    
-    function newGame() {
-        // Initialize the snake
-        snake.init(10, 10, 1, 10, 4);
-        
-        // Generate the default level
-        level.generate();
-        
-        // Add an apple
-        addApple();
-        
-        // Initialize the score
-        score = 0;
-        
-        // Initialize variables
-        gameover = false;
-    }
-    
-    // Add an apple to the level at an empty position
-    function addApple() {
-        // Loop until we have a valid apple
-        var valid = false;
-        while (!valid) {
-            // Get a random position
-            var ax = randRange(0, level.columns-1);
-            var ay = randRange(0, level.rows-1);
-            
-            // Make sure the snake doesn't overlap the new apple
-            var overlap = false;
-            for (var i=0; i<snake.segments.length; i++) {
-                // Get the position of the current snake segment
-                var sx = snake.segments[i].x;
-                var sy = snake.segments[i].y;
-                
-                // Check overlap
-                if (ax == sx && ay == sy) {
-                    overlap = true;
-                    break;
-                }
-            }
-            
-            // Tile must be empty
-            if (!overlap && level.tiles[ax][ay] == 0) {
-                // Add an apple at the tile position
-                level.tiles[ax][ay] = 2;
-                valid = true;
-            }
-        }
-    }
-    
-    // Main loop
-    function main(tframe) {
-        // Request animation frames
-        window.requestAnimationFrame(main);
-        
-        if (!initialized) {
-            // Preloader
-            
-            // Clear the canvas
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw a progress bar
-            var loadpercentage = loadcount/loadtotal;
-            context.strokeStyle = "#ff8080";
-            context.lineWidth=3;
-            context.strokeRect(18.5, 0.5 + canvas.height - 51, canvas.width-37, 32);
-            context.fillStyle = "#ff8080";
-            context.fillRect(18.5, 0.5 + canvas.height - 51, loadpercentage*(canvas.width-37), 32);
-            
-            // Draw the progress text
-            var loadtext = "Loaded " + loadcount + "/" + loadtotal + " images";
-            context.fillStyle = "#000000";
-            context.font = "16px Verdana";
-            context.fillText(loadtext, 18, 0.5 + canvas.height - 63);
-            
-            if (preloaded) {
-                initialized = true;
-            }
-        } else {
-            // Update and render the game
-            update(tframe);
-            render();
-        }
-    }
-    
-    // Update the game state
-    function update(tframe) {
-        var dt = (tframe - lastframe) / 1000;
-        lastframe = tframe;
-        
-        // Update the fps counter
-        updateFps(dt);
-        
-        if (!gameover) {
-            updateGame(dt);
-        } else {
-            gameovertime += dt;
-        }
-    }
-    
-    function updateGame(dt) {
-        // Move the snake
-        if (snake.tryMove(dt)) {
-            // Check snake collisions
-            
-            // Get the coordinates of the next move
-            var nextmove = snake.nextMove();
-            var nx = nextmove.x;
-            var ny = nextmove.y;
-            
-            if (nx >= 0 && nx < level.columns && ny >= 0 && ny < level.rows) {
-                if (level.tiles[nx][ny] == 1) {
-                    // Collision with a wall
-                    gameover = true;
-                }
-                
-                // Collisions with the snake itself
-                for (var i=0; i<snake.segments.length; i++) {
-                    var sx = snake.segments[i].x;
-                    var sy = snake.segments[i].y;
-                    
-                    if (nx == sx && ny == sy) {
-                        // Found a snake part
-                        gameover = true;
-                        break;
-                    }
-                }
-                
-                if (!gameover) {
-                    // The snake is allowed to move
+    // Checking if the snake has died.
+    die() {
 
-                    // Move the snake
-                    snake.move();
-                    
-                    // Check collision with an apple
-                    if (level.tiles[nx][ny] == 2) {
-                        // Remove the apple
-                        level.tiles[nx][ny] = 0;
-                        
-                        // Add a new apple
-                        addApple();
-                        
-                        // Grow the snake
-                        snake.grow();
-                        
-                        // Add a point to the score
-                        score++;
-                    }
-                    
+        for (var i = 0; i < this.tail.length; i++) {
 
-                }
-            } else {
-                // Out of bounds
-                gameover = true;
+            if (Math.abs(this.x - this.tail[i].x) < tileSize && Math.abs(this.y - this.tail[i].y) < tileSize) {
+                return true;
             }
-            
-            if (gameover) {
-                gameovertime = 0;
-            }
+
         }
+
+        return false;
+
     }
-    
-    function updateFps(dt) {
-        if (fpstime > 0.25) {
-            // Calculate fps
-            fps = Math.round(framecount / fpstime);
-            
-            // Reset time and framecount
-            fpstime = 0;
-            framecount = 0;
+
+    border() {
+
+        if (this.x + tileSize > width && this.velX != -1 || this.x < 0 && this.velX != 1)
+            this.x = width - this.x;
+
+        else if (this.y + tileSize > height && this.velY != -1 || this.velY != 1 && this.y < 0)
+            this.y = height - this.y;
+
+    }
+
+}
+
+// Treating the food as an object.
+class Food {
+
+    // Initialization of object properties.
+    constructor(pos, color) {
+
+        this.x = pos.x;
+        this.y = pos.y;
+        this.color = color;
+
+    }
+
+    // Drawing the food on the canvas.
+    draw() {
+
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, tileSize, tileSize);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.closePath();
+
+    }
+
+}
+
+// Initialization of the game objects.
+function init() {
+
+    tileSize = 20;
+
+    // Dynamically controlling the size of canvas.
+    width = tileSize * Math.floor(window.innerWidth / tileSize);
+    height = tileSize * Math.floor(window.innerHeight / tileSize);;
+
+    fps = 10;
+
+    then = Date.now();
+    startTime = then;
+    fpsInterval = 1000 / fps;
+
+    canvas = document.getElementById("game-area");
+    canvas.width = width;
+    canvas.height = height;
+    ctx = canvas.getContext("2d");
+    console.log(canvas);
+
+    FONT_NAME = '8bit';
+    eat = new Audio('./resources/audio/eat.mp3');
+    die = new Audio('./resources/audio/die.mp3');
+    isPaused = false;
+    score = 0;
+    snake = new Snake({ x: tileSize * Math.floor(width / (2 * tileSize)), y: tileSize * Math.floor(height / (2 * tileSize)) }, "#39ff14");
+    food = new Food(spawnLocation(), "red");
+
+}
+
+// Updating the position and redrawing of game objects.
+function update() {
+
+    animationFrame = requestAnimationFrame(update);
+    now = Date.now();
+    elapsed = now - then;
+
+    if (elapsed > fpsInterval) {
+
+        // Get ready for next frame by setting then=now, but also adjust for your
+        // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
+        then = now - (elapsed % fpsInterval);
+
+        // Checking if game is paused.
+        if (isPaused) {
+            return;
         }
-        
-        // Increase time and framecount
-        fpstime += dt;
-        framecount++;
-    }
-    
-    // Render the game
-    function render() {
-        // Draw background
-        context.fillStyle = "#577ddb";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        
-        drawLevel();
-        drawSnake();
-            
-        // Game over
-        if (gameover) {
-            context.fillStyle = "rgba(0, 0, 0, 0.5)";
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            
-            context.fillStyle = "#ffffff";
-            context.font = "24px Verdana";
-            drawCenterText("Press any key to start!", 0, canvas.height/2, canvas.width);
+
+        if (snake.die()) {
+            die.play()
+            alert("GAME OVER!!!");
+            cancelAnimationFrame(animationFrame);
+            window.location.reload();
         }
-    }
-    
-    // Draw the level tiles
-    function drawLevel() {
-        for (var i=0; i<level.columns; i++) {
-            for (var j=0; j<level.rows; j++) {
-                // Get the current tile and location
-                var tile = level.tiles[i][j];
-                var tilex = i*level.tilewidth;
-                var tiley = j*level.tileheight;
-                
-                // Draw tiles based on their type
-                if (tile == 0) {
-                    // Empty space
-                    context.fillStyle = "#f7e697";
-                    context.fillRect(tilex, tiley, level.tilewidth, level.tileheight);
-                } else if (tile == 1) {
-                    // Wall
-                    context.fillStyle = "#bcae76";
-                    context.fillRect(tilex, tiley, level.tilewidth, level.tileheight);
-                } else if (tile == 2) {
-                    // Apple
-                    
-                    // Draw apple background
-                    context.fillStyle = "#f7e697";
-                    context.fillRect(tilex, tiley, level.tilewidth, level.tileheight);
-                    
-                    // Draw the apple image
-                    var tx = 0;
-                    var ty = 3;
-                    var tilew = 64;
-                    var tileh = 64;
-                    context.drawImage(tileimage, tx*tilew, ty*tileh, tilew, tileh, tilex, tiley, level.tilewidth, level.tileheight);
-                }
-            }
+
+        snake.border();
+
+        if (snake.eat()) {
+            eat.play()
+            score += 10;
+            food = new Food(spawnLocation(), "red");
         }
+
+        // Clearing the canvas for redrawing.
+        ctx.clearRect(0, 0, width, height);
+
+        food.draw();
+        snake.draw();
+        snake.move();
+        showScore();
+
     }
-    
-    // Draw the snake
-    function drawSnake() {
-        // Loop over every snake segment
-        for (var i=0; i<snake.segments.length; i++) {
-            var segment = snake.segments[i];
-            var segx = segment.x;
-            var segy = segment.y;
-            var tilex = segx*level.tilewidth;
-            var tiley = segy*level.tileheight;
-            
-            // Sprite column and row that gets calculated
-            var tx = 0;
-            var ty = 0;
-            
-            if (i == 0) {
-                // Head; Determine the correct image
-                var nseg = snake.segments[i+1]; // Next segment
-                if (segy < nseg.y) {
-                    // Up
-                    tx = 3; ty = 0;
-                } else if (segx > nseg.x) {
-                    // Right
-                    tx = 4; ty = 0;
-                } else if (segy > nseg.y) {
-                    // Down
-                    tx = 4; ty = 1;
-                } else if (segx < nseg.x) {
-                    // Left
-                    tx = 3; ty = 1;
-                }
-            } else if (i == snake.segments.length-1) {
-                // Tail; Determine the correct image
-                var pseg = snake.segments[i-1]; // Prev segment
-                if (pseg.y < segy) {
-                    // Up
-                    tx = 3; ty = 2;
-                } else if (pseg.x > segx) {
-                    // Right
-                    tx = 4; ty = 2;
-                } else if (pseg.y > segy) {
-                    // Down
-                    tx = 4; ty = 3;
-                } else if (pseg.x < segx) {
-                    // Left
-                    tx = 3; ty = 3;
-                }
-            } else {
-                // Body; Determine the correct image
-                var pseg = snake.segments[i-1]; // Previous segment
-                var nseg = snake.segments[i+1]; // Next segment
-                if (pseg.x < segx && nseg.x > segx || nseg.x < segx && pseg.x > segx) {
-                    // Horizontal Left-Right
-                    tx = 1; ty = 0;
-                } else if (pseg.x < segx && nseg.y > segy || nseg.x < segx && pseg.y > segy) {
-                    // Angle Left-Down
-                    tx = 2; ty = 0;
-                } else if (pseg.y < segy && nseg.y > segy || nseg.y < segy && pseg.y > segy) {
-                    // Vertical Up-Down
-                    tx = 2; ty = 1;
-                } else if (pseg.y < segy && nseg.x < segx || nseg.y < segy && pseg.x < segx) {
-                    // Angle Top-Left
-                    tx = 2; ty = 2;
-                } else if (pseg.x > segx && nseg.y < segy || nseg.x > segx && pseg.y < segy) {
-                    // Angle Right-Up
-                    tx = 0; ty = 1;
-                } else if (pseg.y > segy && nseg.x > segx || nseg.y > segy && pseg.x > segx) {
-                    // Angle Down-Right
-                    tx = 0; ty = 0;
-                }
-            }
-            
-            // Draw the image of the snake part
-            context.drawImage(tileimage, tx*64, ty*64, 64, 64, tilex, tiley,
-                              level.tilewidth, level.tileheight);
-        }
-    }
-    
-    // Draw text that is centered
-    function drawCenterText(text, x, y, width) {
-        var textdim = context.measureText(text);
-        context.fillText(text, x + (width-textdim.width)/2, y);
-    }
-    
-    // Get a random int between low and high, inclusive
-    function randRange(low, high) {
-        return Math.floor(low + Math.random()*(high-low+1));
-    }
-    
-    // Mouse event handlers
-    function onMouseDown(e) {
-        // Get the mouse position
-        var pos = getMousePos(canvas, e);
-        
-        if (gameover) {
-            // Start a new game
-            tryNewGame();
-        } else {
-            // Change the direction of the snake
-            snake.direction = (snake.direction + 1) % snake.directions.length;
-        }
-    }
-    
-    // Keyboard event handler
-    function onKeyDown(e) {
-        if (gameover) {
-            tryNewGame();
-        } else {
-            if (e.keyCode == 37 || e.keyCode == 65) {
-                // Left or A
-                if (snake.direction != 1)  {
-                    snake.direction = 3;
-                }
-            } else if (e.keyCode == 38 || e.keyCode == 87) {
-                // Up or W
-                if (snake.direction != 2)  {
-                    snake.direction = 0;
-                }
-            } else if (e.keyCode == 39 || e.keyCode == 68) {
-                // Right or D
-                if (snake.direction != 3)  {
-                    snake.direction = 1;
-                }
-            } else if (e.keyCode == 40 || e.keyCode == 83) {
-                // Down or S
-                if (snake.direction != 0)  {
-                    snake.direction = 2;
-                }
-            }
-            
-            // Grow for demonstration purposes
-            if (e.keyCode == 32) {
-                snake.grow();
-            }
-        }
-    }
-    
-    // Get the mouse position
-    function getMousePos(canvas, e) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-            x: Math.round((e.clientX - rect.left)/(rect.right - rect.left)*canvas.width),
-            y: Math.round((e.clientY - rect.top)/(rect.bottom - rect.top)*canvas.height)
-        };
-    }
-    
-    // Call init to start the game
+
+}
+
+// The actual game function.
+function game() {
+
     init();
-};
+
+    // The game loop.
+    update();
+
+}
