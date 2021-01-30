@@ -36,7 +36,8 @@ imgRex = new Image();
 
 var ancho = 700;
 var alto = 300;
-var canvas,ctx;
+var canvas;
+var ctx;
 
 function inicializa(){
 var ctx = document.getElementById('canvas').getContext('2d');
