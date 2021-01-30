@@ -39,8 +39,7 @@ var alto = 300;
 var canvas,ctx;
 
 function inicializa(){
-canvas = document.getElementById('canvas');
- ctx = canvas.getContext('2d');
+var ctx = document.getElementById('canvas').getContext('2d');
  cargaImagenes();
 }
 
