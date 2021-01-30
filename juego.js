@@ -48,8 +48,8 @@ var ctx = document.getElementById('canvas').getContext('2d');
 
 
 function borraCanvas(){
- canvas.width = ancho;
- canvas.height = alto;
+canvas.width = ancho;
+	canvas.height = alto;
 }
 
 var suelo = 200;
