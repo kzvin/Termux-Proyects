@@ -184,8 +184,8 @@ function principal(){
 borraCanvas();
  gravedad();
  colision();
+  logicaSuelo();
  logicaCactus();
- logicaSuelo();
  logicaNube();
   dibujaSuelo();
  dibujaCactus();
