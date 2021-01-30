@@ -30,7 +30,7 @@ imgRex = new Image();
  imgRex.src = 'images/rex.png';
   imgNube.src = 'images/nube.png';
   imgCactus.src = 'images/cactus.png';
-  imgSuelo.src = 'images/suelo.png';
+  imgSuelo.src = 'images/suelo2.png';
 
 }
 
