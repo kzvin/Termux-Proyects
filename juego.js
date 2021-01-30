@@ -16,21 +16,21 @@ if(nivel.muerto == false)
 });
 
 
-var imgRex, imgNube, imgCactus, imgSuelo;
+var imgRex, imgNube, imgCactus, imgSuelo2;
 
 
 function cargaImagenes(){
 imgRex = new Image();
  imgNube = new Image();
  imgCactus = new Image();
- imgSuelo = new Image();
+ imgSuelo2 = new Image();
  
  
  
  imgRex.src = 'images/rex.png';
   imgNube.src = 'images/nube.png';
   imgCactus.src = 'images/cactus.png';
-  imgSuelo.src = 'images/suelo2.png';
+  imgSuelo2.src = 'images/suelo2.png';
 
 }
 
@@ -82,7 +82,7 @@ function logicaCactus(){
 
 function dibujaSuelo(){
  cargarImagenes()
-ctx.drawImage(imgSuelo,suelog.x,0,700,30,0,suelog.y,700,30);
+ctx.drawImage(imgSuelo2,suelog.x,0,700,30,0,suelog.y,700,30);
 }
 
 
