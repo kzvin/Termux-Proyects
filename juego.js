@@ -57,7 +57,7 @@ var trex = {y: 250, vy:0, gravedad:2, salto:28, vymax:9, saltando: false};
 var nivel = {velocidad: 9, puntuacion: 0, muerto: false};
 var cactus = {x: ancho + 100, y: suelo-25};
 var nube = {x: 400, y: 100, velocidad: 1};
-var suelog = {x:0, y:suelo + 30);
+var suelog = {x:0, y:suelo + 30};
 
 
 
