@@ -64,6 +64,7 @@ var suelog = {x:0, y:suelo + 30};
 //--------------------------------------
 
 function dibujaCactus(){
+ cargarImagenes()
 ctx.drawImage(imgCactus,0,0,38,75,cactus.x,cactus.y,38,75);
 }
 
@@ -79,6 +80,7 @@ function logicaCactus(){
 //--------------------------------------
 
 function dibujaSuelo(){
+ cargarImagenes()
 ctx.drawImage(imgSuelo,suelog.x,0,700,30,0,suelog.y,700,30);
 }
 
@@ -103,6 +105,7 @@ function logicaSuelo(){
 
 
 function dibujaNube(){
+ cargarImagenes()
 ctx.drawImage(imgNube,0,0,82,31,nube.x, nube.y, 82,31);
 }
 
@@ -118,6 +121,7 @@ function logicaNube(){
 
 
 function dibujaRex(){
+ cargarImagenes()
 ctx.drawImage(imgRex,0,0,64,69,100,trex.y,50,50);
 }
 
